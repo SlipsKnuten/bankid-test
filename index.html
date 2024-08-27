@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register with BankID</title>
+</head>
+<body>
+  <h1>Register</h1>
+  <form id="registrationForm">
+    <input type="text" id="personalNumber" placeholder="Enter Personal Number" required />
+    <button type="submit">Register with BankID</button>
+  </form>
+  <div id="status"></div>
+
+  <script>
+    document.getElementById('registrationForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const personalNumber = document.getElementById('personalNumber').value;
+      document.getElementById('status').textContent = 'Initiating BankID...';
+      
+      try {
+        const response = await fetch('/initiate-auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ personalNumber })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById('status').textContent = 'BankID initiated, awaiting user confirmation...';
+          // Poll for BankID status
+        } else {
+          document.getElementById('status').textContent = 'BankID initiation failed';
+        }
+      } catch (error) {
+        document.getElementById('status').textContent = 'Error initiating BankID';
+      }
+    });
+  </script>
+</body>
+</html>
