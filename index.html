@@ -27,13 +27,37 @@
         });
         
         const data = await response.json();
-        if (data.success) {
+        if (data.orderRef) {  // Assuming BankID initiation returns an order reference
           document.getElementById('status').textContent = 'BankID initiated, awaiting user confirmation...';
-          // Poll for BankID status
+          
+          // Polling for BankID status
+          let polling = true;
+          while (polling) {
+            await new Promise(resolve => setTimeout(resolve, 5000));  // Wait 5 seconds between polls
+            
+            const collectResponse = await fetch('/collect-auth', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderRef: data.orderRef })
+            });
+            
+            const collectData = await collectResponse.json();
+            if (collectData.status === 'complete') {
+              document.getElementById('status').textContent = 'BankID authentication successful!';
+              polling = false;
+              // Optionally, trigger account creation here
+            } else if (collectData.status === 'failed') {
+              document.getElementById('status').textContent = 'BankID authentication failed.';
+              polling = false;
+            } else {
+              document.getElementById('status').textContent = 'Awaiting user confirmation...';
+            }
+          }
         } else {
           document.getElementById('status').textContent = 'BankID initiation failed';
         }
       } catch (error) {
+        console.error('Error initiating BankID:', error);
         document.getElementById('status').textContent = 'Error initiating BankID';
       }
     });
